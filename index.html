@@ -1,71 +1,92 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <!-- Font Dependencies -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" rel="stylesheet" type="text/css">
 
-    <title>LexWebUi Demo</title>
+    <!-- Vuetify CSS Dependencies -->
+    <link href="https://unpkg.com/vuetify@0.16.9/dist/vuetify.min.css" rel="stylesheet" type="text/css">
 
-    <!-- empty favicon to avoid 404 -->
-    <link href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" rel="icon" type="image/x-icon" />
+    <!-- LexWebUi CSS from dist directory -->
+    <link href="./lex-web-ui.css" rel="stylesheet" type="text/css">
+    <!-- page specific LexWebUi styling -->
+    <style type="text/css">
+      #lex-web-ui-app { display: flex; height: 100%; width: 100%; }
+      body, html { overflow-y: auto; overflow-x: hidden; }
+    </style>
   </head>
   <body>
-    <!-- babel-polyfill needed for IE11 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js" integrity="sha256-WRc/eG3R84AverJv0zmqxAmdwQxstUpqkiE+avJ3WSo=" crossorigin="anonymous"></script>
+    <!-- application will be dynamically mounted here -->
+    <div id="lex-web-ui"></div>
 
     <!--
-      Loader script.
-      Creates a global variable named ChatbotUiLoader.
+      Vue, Vuex, Vuetifiy and AWS SDK dependencies must be loaded before lex-web-ui.js.
+      Loading from third party CDN for quick testing
     -->
-    <script src="./lex-web-ui-loader.js"></script>
-    <!--
-      The following script instantiate the full page loader and
-      calls its load function.
-    -->
+    <script src="https://unpkg.com/vue@2.5.3"></script>
+    <script src="https://unpkg.com/vuex@3.0.1"></script>
+    <script src="https://unpkg.com/vuetify@0.16.9"></script>
+    <script src="./aws-sdk.js"></script>
+
+    <!-- LexWebUi Library from dist directory -->
+    <script src="./lex-web-ui.js"></script>
+
+    <!-- instantiate the web ui with a basic config -->
+
     <script>
-      // In the most simple form, you can load the component in a single statement:
-      //   new ChatBotUiLoader.FullPageLoader().load();
+      // Initialize the Amazon Cognito credentials provider
+      AWS.config.region = 'eu-west-1'; // Region
+      AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: 'eu-west-1:36a096ea-402a-4d6c-aa2b-fccd36cc4491',
+        RoleArn: 'arn:aws:iam::718702931059:role/aws-service-role/lex.amazonaws.com/AWSServiceRoleForLexBots'
+      });
 
-      // The script below break the process into parts to further illustrate
-      // the load process.
-
-      // The ChatBotUiLoader variable contains the FullPageLoader field which is a
-      // constructor for the loader.
-      var Loader = ChatBotUiLoader.FullPageLoader;
-
-      // The loader constructor supports various configurable options used to
-      // control how the component configuration and dependencies are retrieved.
-      // In this case, we are just passing one option (which doesn't changethe
-      // default) for illustration purposes.
-      var loaderOpts = {
-        // The following option controls if the local config should be ignored
-        // when running this page embedded in an iframe.
-        // If set to true, only passes the parentOrigin field when run as an
-        // iframe and delegates the config to the parent
-        shouldIgnoreConfigWhenEmbedded: true
-      };
-
-      // Instantiate the loader by optionally passing the loader options to
-      // control its behavior. You may leave the options empty if you wish
-      // to take the defaults which works in most cases.
-      var loader = new Loader(loaderOpts);
-
-      // When loading the chatbot UI component, you can optionally pass it a
-      // configuration object
-      var chatbotUiConfig = {
+      // default config used to provide a base structure for
+      // environment and dynamic configs
+      var config = {
+        // AWS region
+        region: 'eu-west-1',
+        cognito: {
+          // Cognito pool id used to obtain credentials
+          // e.g. poolId: 'us-east-1:deadbeef-cac0-babe-abcd-abcdef01234',
+          poolId: 'eu-west-1:36a096ea-402a-4d6c-aa2b-fccd36cc4491'
+        },
         lex: {
-          sessionAttributes: {
-            userAgent: navigator.userAgent
-          }
+          // Lex bot name
+          botName: 'FQs',
+          // Lex bot alias/version
+          botAlias: 'enrolment',
+          botUser: 'lf46qvj9koti5naiw97elvdl8b0qgf2v',
+          // instruction message shown in the UI
+          initialText: 'Hi, this is the initial text. Hello world!',
+          // instructions spoken when mic is clicked
+          initialSpeechInstruction: 'Say "Hello" to get started'
+        },
+        polly: {
+          voiceId: 'Joanna'
+        },
+        ui: {
+          // TODO may want to move pageTitle out to LexApp or Page component
+          // title of HTML page added dynamically to index.html
+          pageTitle: 'Beca Nuria BOT',
+          // chat window text placeholder
+          textInputPlaceholder: 'Type here or click on the mic',
+          toolbarColor: 'blue',
+          // chat window title
+          toolbarTitle: 'FQs BOT',
+          // logo used in toolbar - also used as favicon not specificied
+          toolbarLogo: '',
+          // fav icon
+          favIcon: ''
         }
       };
-
-      // Calling the load function of the loader does a few things:
-      //   1. Loads JavaScript and CSS dependencies to the DOM
-      //   2. Loads the chatbot UI configuration from various sources
-      //       (e.g. JSON file, mobile hub event)
-      //   3. Instantiates the chatbot UI component in the DOM
-      loader.load(chatbotUiConfig);
+      // load the LexWebUi component
+      var lexWebUi = new LexWebUi.Loader(config);
+      // instantiate Vue
+      new Vue({
+        el: '#lex-web-ui',
+        store: lexWebUi.store,
+        template: '<div id="lex-web-ui-app"><lex-web-ui/></div>',
+      });
     </script>
   </body>
 </html>

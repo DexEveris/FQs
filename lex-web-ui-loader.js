@@ -41833,8 +41833,8 @@ Object.defineProperty(exports, "__esModule", {
  */
 
 var configBase = exports.configBase = {
-  lex: { botName: 'FQs' },
-  cognito: { poolId: 'eu-west-1:36a096ea-402a-4d6c-aa2b-fccd36cc4491' },
+  lex: { botName: '' },
+  cognito: { poolId: '' },
   ui: { parentOrigin: '' },
   polly: {},
   recorder: {},
